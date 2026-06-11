@@ -20,6 +20,8 @@ from PIL import Image
 from bhume import load, patch_for_plot, score, write_predictions
 from bhume.baseline import global_median_shift
 from bhume.geo import open_imagery
+from bhume.method import predict_boundaries
+
 
 DEFAULT_VILLAGE = 'data/34855_vadnerbhairav_chandavad_nashik'
 
@@ -36,16 +38,29 @@ def main(village_dir: str) -> None:
     with open_imagery(village.imagery_path) as src:
         patch = patch_for_plot(src, village.plot(pn), pad_m=30)
     Image.fromarray(patch.image).save('patch_example.png')
-    print(f'  image patch under plot {pn}: {patch.image.shape} → saved patch_example.png')
+    print(f'  image patch under plot {pn}: {patch.image.shape} -> saved patch_example.png')
 
-    # 2) Make a naive prediction (the floor to beat).
-    preds = global_median_shift(village)
+
+    # 2a) Baseline floor to beat.
+    baseline_preds = global_median_shift(village)
+    # 2b) Your method.
+    preds = predict_boundaries(village)
+
     out = write_predictions(Path(village_dir) / 'predictions.geojson', preds)
     print(f'  wrote {len(preds)} predictions → {out}')
 
     # 3) Self-score it against the example truths.
     print()
+    print('baseline (global_median_shift):')
+    if village.example_truths is not None:
+        print(score(baseline_preds, village))
+    else:
+        print('  (no example_truths.geojson in this bundle)')
+
+    print()
+    print('method (predict_boundaries):')
     print(score(preds, village))
+
 
 
 if __name__ == '__main__':

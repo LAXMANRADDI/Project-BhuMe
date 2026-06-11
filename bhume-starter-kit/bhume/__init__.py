@@ -29,4 +29,9 @@ __all__ = [
     'pixel_to_lonlat',
     'Scorecard',
     'score',
+    'predict_boundaries',
 ]
+
+# optional convenience export
+from bhume.method import predict_boundaries
+
